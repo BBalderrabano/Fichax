@@ -106,6 +106,7 @@ public class GridManager : MonoBehaviour
         }
 
         if (isValid) {
+
             for (int i = chipPicker.childCount - 1; i >= 0 ; i--)
             {
                 Transform child = chipPicker.GetChild(i);
