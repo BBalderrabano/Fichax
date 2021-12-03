@@ -100,9 +100,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9827c67c04168444802666d843239ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Chip_Variant: 0
   Board_X: 0
   Board_Y: 0
+  position: {x: 0, y: 0, z: 0}
 --- !u!114 &6783006414084857506
 MonoBehaviour:
   m_ObjectHideFlags: 0

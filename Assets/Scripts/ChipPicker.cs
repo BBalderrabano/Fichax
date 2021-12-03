@@ -3,18 +3,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using CodeMonkey.Utils;
+using System.Linq;
+using System;
 
 public class ChipPicker : MonoBehaviour
 {
-    private bool blockingInteractions = false;
+    public GridManager manager;
+
+    private bool blockInteractions = false;
+
+    private bool BlockingInteractions() { return blockInteractions || manager.blockInteractions; }
 
     private Vector3 startPosition;
 
     [SerializeField]
     private float rotationDuration = 0.25f;
-    private int rotateTimes;
+    public int rotateTimes = 0;
 
-    private bool isDragging() { return dragTime >= dragTreshold && !blockingInteractions; }
+    private bool IsDragging() { return dragTime >= dragTreshold && !BlockingInteractions(); }
 
     private bool dragging = false;
     private float dragTreshold = 0.25f;
@@ -32,20 +38,31 @@ public class ChipPicker : MonoBehaviour
 
     void OnMouseUp()
     {
-        if (!isDragging())
+        if (!IsDragging())
         {
             rotateTimes++;
         }
         else
         {
-            LeanTween.move(gameObject, startPosition, 0.4f)
-                .setOnStart(() => {
-                    blockingInteractions = true;
-                })
-                .setOnComplete(() => {
-                    blockingInteractions = false;
-                })
-                .setEaseOutQuart();
+            bool isValid = manager.DropAtPosition(transform);
+
+            if (!isValid)
+            {
+                LeanTween.move(gameObject, startPosition, 0.4f)
+                    .setOnStart(() =>
+                    {
+                        blockInteractions = true;
+                    })
+                    .setOnComplete(() =>
+                    {
+                        blockInteractions = false;
+                    })
+                    .setEaseOutQuart();
+            }
+            else {
+
+                transform.position = startPosition;
+            }
         }
 
         dragTime = 0;
@@ -54,19 +71,19 @@ public class ChipPicker : MonoBehaviour
 
     private void Update()
     {
-        if(rotateTimes > 0 && !blockingInteractions)
+        if(rotateTimes > 0 && !BlockingInteractions())
         {
+            blockInteractions = true;
+
             LeanTween.rotateZ(gameObject, gameObject.transform.eulerAngles.z - 90f, rotationDuration)
                 .setOnStart(()=> {
-                    blockingInteractions = true;
-
                     foreach (Transform child in transform)
                     {
                         LeanTween.rotateLocal(child.gameObject, new Vector3(0, 0, child.localEulerAngles.z + 90f), rotationDuration);
                     }
                 })
                 .setOnComplete(() => {
-                    blockingInteractions = false;
+                    blockInteractions = false;
                     rotateTimes = Mathf.Max(0, rotateTimes - 1);
                 });
         }
@@ -76,12 +93,36 @@ public class ChipPicker : MonoBehaviour
             dragTime += Time.deltaTime;
         }
 
-        if (isDragging())
+        if (IsDragging())
         {
             Vector3 mousePos = UtilsClass.GetMouseWorldPosition();
             Vector3 targetPos = new Vector3(mousePos.x, mousePos.y + 1);
 
-            transform.position = Vector3.Lerp(transform.position, targetPos, 10f *Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, targetPos, 10f * Time.deltaTime);
+
+        }
+        else if (!BlockingInteractions() && transform.childCount == 0) {
+            CreateNewChips();
+        }
+    }
+
+    void CreateNewChips(int amount = 2) {
+
+        List<Variant> all = Enum.GetValues(typeof(Variant)).Cast<Variant>().ToList();
+
+        List<Variant> exclude = new List<Variant>() { Variant.NONE, Variant.RAINBOW };
+
+        for (int i = 0; i < amount; i++)
+        {
+            List<Variant> probable = all.Except(exclude).ToList();
+
+            GameObject go = Instantiate(manager.prefab, transform);
+
+            Chip next = go.GetComponent<Chip>();
+
+            next.SetChipVariant(probable[UnityEngine.Random.Range(0, probable.Count)]);
+
+            exclude.Add(next.GetChipVariant());
         }
     }
 }
