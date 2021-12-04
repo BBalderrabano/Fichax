@@ -18,13 +18,15 @@ public class ChipPicker : MonoBehaviour
 
     [SerializeField]
     private float rotationDuration = 0.25f;
-    public int rotateTimes = 0;
+    private int rotateTimes = 0;
 
     private bool IsDragging() { return dragTime >= dragTreshold && !BlockingInteractions(); }
 
     private bool dragging = false;
     private float dragTreshold = 0.25f;
     private float dragTime = 0f;
+
+    public float spawnAnimationDuration = 1f;
 
     private void Awake()
     {
@@ -116,7 +118,10 @@ public class ChipPicker : MonoBehaviour
         {
             List<Variant> probable = all.Except(exclude).ToList();
 
-            GameObject go = Instantiate(manager.prefab, transform);
+            GameObject go = Instantiate(manager.chipPrefab, transform);
+
+            go.LeanScale(go.transform.localScale, spawnAnimationDuration).setFrom(go.transform.localScale * 1.4f).setEaseOutExpo();
+            go.LeanAlpha(1f, spawnAnimationDuration * 0.5f).setFrom(0f);
 
             Chip next = go.GetComponent<Chip>();
 

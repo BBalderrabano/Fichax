@@ -9,7 +9,11 @@ using UnityEngine.UI;
 public class GridManager : MonoBehaviour
 {
     [Header("Board Setups")]
-    public GameObject prefab;
+    public GameObject chipPrefab;
+
+    public GameObject flyingScorePrefab;
+
+    public GameObject scoreContainer;
 
     [System.NonSerialized]
     public bool blockInteractions = false;
@@ -32,10 +36,14 @@ public class GridManager : MonoBehaviour
     [Header("Sprite and Animations")]
     public float boardOpacity = 0.5f;
 
-    public float chipFallDuration = 0.4f;
+    public float chipFallSpeed = 1f;
+
+    public PlayerData playerData;
 
     void Start()
     {
+        playerData = new PlayerData();
+
         gridLayoutGroup = GetComponent<GridLayoutGroup>();
 
         gridLayoutGroup.constraintCount = width;
@@ -48,7 +56,7 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                GameObject go = Instantiate(prefab, transform);
+                GameObject go = Instantiate(chipPrefab, transform);
 
                 go.GetComponent<Renderer>().material.color = new Color(1.0f, 1.0f, 1.0f, boardOpacity);
 
@@ -111,6 +119,7 @@ public class GridManager : MonoBehaviour
             {
                 Transform child = chipPicker.GetChild(i);
                 ValidPosition validPos = validPositions[i];
+                Chip childChip = child.GetComponent<Chip>();
 
                 child.GetComponent<LayoutElement>().ignoreLayout = true;
 
@@ -119,7 +128,9 @@ public class GridManager : MonoBehaviour
                 child.transform.position = validPos.position;
                 child.transform.localPosition = new Vector3(child.transform.localPosition.x, child.transform.localPosition.y, 0);
 
-                board[validPos.grid_x, validPos.grid_y] = child.GetComponent<Chip>();
+                board[validPos.grid_x, validPos.grid_y] = childChip;
+
+                childChip.SetChipPosData(validPos.grid_x, validPos.grid_y, validPos.position);
             }
 
             UpdateBoard();
@@ -128,8 +139,12 @@ public class GridManager : MonoBehaviour
         return isValid;
     }
 
+    private int fallingAmount = 0;
+
     public void UpdateBoard() {
-        
+
+        fallingAmount = 0;
+
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
@@ -146,18 +161,31 @@ public class GridManager : MonoBehaviour
 
                 if (isFloating) {
                     blockInteractions = true;
+                    fallingAmount++;
 
                     board[x, y] = null;
                     board[x, target_y] = chip;
 
-                    LeanTween.moveY(chip.gameObject, gridElementPositionCache[x, target_y].y, chipFallDuration)
+                    chip.SetChipPosData(x, target_y, gridElementPositionCache[x, target_y]);
+
+                    LeanTween.moveY(chip.gameObject, gridElementPositionCache[x, target_y].y, Mathf.Abs(target_y - y) / chipFallSpeed)
                         .setOnComplete(()=> {
-                            blockInteractions = false;
+                            FallingEnded();
                         })
                         .setEaseOutBounce();
                 }
             }
         }
+
+        if (fallingAmount == 0)
+            CheckForMatches();
+    }
+
+    void FallingEnded() {
+        fallingAmount--;
+
+        if (fallingAmount <= 0)
+            CheckForMatches();
     }
 
     void IsChipFloating(int x, int y, out bool isFloating, out int target_y) {
@@ -173,6 +201,135 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    void CheckForMatches() {
+        List<Chip> alreadyChecked = new List<Chip>();
+
+        bool matched = false;
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (board[x, y] == null || alreadyChecked.Contains(board[x,y]))
+                    continue;
+
+                List<Chip> currentCheck = CheckForMatches(x, y);
+
+                alreadyChecked.AddRange(currentCheck);
+
+                if (currentCheck.Count >= playerData.AMOUNT_TO_MATCH) {
+                    matched = true;
+
+                    foreach (Chip chip in currentCheck)
+                    {
+                        board[chip.Board_X, chip.Board_Y] = null;
+
+                        CreateFlyingScore(chip);
+                    }
+                }
+
+                currentCheck.Clear();
+            }
+        }
+
+        if (matched)
+        {
+            UpdateBoard();
+        }
+        else {
+            blockInteractions = false;
+        }
+    }
+
+    void CreateFlyingScore(Chip chip) {
+        GameObject flyingDisplay = Instantiate(flyingScorePrefab, chip.position, Quaternion.identity, transform.parent);
+
+        flyingDisplay.GetComponent<FlyingScoreDisplay>().endPosition = scoreContainer;
+
+        chip.transform.SetParent(flyingDisplay.transform);
+        chip.transform.GetComponent<SpriteRenderer>().sortingOrder = 9;
+
+        LeanTween.scale(chip.gameObject, chip.transform.localScale * 0.3f, 1f).setDelay(0.1f).setEaseOutCirc();
+
+        Gradient newTrailColor = new Gradient();
+
+        GradientColorKey[] gColorKey;
+        GradientAlphaKey[] gAlphaKey;
+
+        gColorKey = new GradientColorKey[3];
+        gColorKey[0].color = chip.gameObject.GetComponent<SpriteRenderer>().color;
+        gColorKey[0].time = 0.0f;
+        gColorKey[1].color = chip.gameObject.GetComponent<SpriteRenderer>().color;
+        gColorKey[1].time = 0.8f;
+        gColorKey[2].color = Color.white;
+        gColorKey[2].time = 1.0f;
+
+        gAlphaKey = new GradientAlphaKey[3];
+        gAlphaKey[0].alpha = 1.0f;
+        gAlphaKey[0].time = 0.0f;
+        gAlphaKey[1].alpha = 1.0f;
+        gAlphaKey[1].time = 0.5f;
+        gAlphaKey[2].alpha = 0.0f;
+        gAlphaKey[2].time = 1.0f;
+
+        newTrailColor.SetKeys(gColorKey, gAlphaKey);
+
+        flyingDisplay.GetComponent<TrailRenderer>().colorGradient = newTrailColor;
+    }
+
+    List<Chip> CheckForMatches(int x, int y) {
+        Chip pointer = board[x, y];
+
+        List<Chip> possible = new List<Chip>();
+
+        List<Chip> toCheck = new List<Chip>() { pointer };
+
+        while (pointer != null) {
+
+            if (!possible.Contains(pointer)) {
+
+                toCheck.AddRange(CheckArround(pointer));
+
+                possible.Add(pointer);
+            }
+
+            toCheck.Remove(pointer);
+
+            if (toCheck.Count > 0)
+                pointer = toCheck.First();
+            else
+                pointer = null;
+        }
+
+        return possible;
+    }
+
+    List<Chip> CheckArround(Chip target) {
+        List<Chip> matches = new List<Chip>();
+
+        for (int xOffset = -1; xOffset <= 1; xOffset++)
+        {
+            for (int yOffset = -1; yOffset <= 1; yOffset++)
+            {
+                if (target.Board_X + xOffset < 0 || target.Board_X + xOffset > (width - 1) || target.Board_Y + yOffset < 0 || target.Board_Y + yOffset > (height - 1))
+                    continue;
+
+                //Skip Diagonals
+                if (xOffset != 0 && yOffset != 0)
+                    continue;
+
+                Chip compare = board[target.Board_X + xOffset, target.Board_Y + yOffset];
+
+                if (compare == null || compare == target)
+                    continue;
+
+                if (target.MatchesWithChip(compare)) {
+                    matches.Add(compare);
+                }
+            }
+        }
+        return matches;
+    }
 
     public void GetGridPosition(Vector3 pos, out int grid_x, out int grid_y, out Vector3 gridPosition)
     {
@@ -213,3 +370,4 @@ class ValidPosition {
         this.position = new Vector3(position.x, position.y, 0);
     }
 }
+

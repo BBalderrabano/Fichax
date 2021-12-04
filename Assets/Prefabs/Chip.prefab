@@ -103,6 +103,13 @@ MonoBehaviour:
   Board_X: 0
   Board_Y: 0
   position: {x: 0, y: 0, z: 0}
+  RED: {r: 1, g: 0, b: 0, a: 1}
+  GREEN: {r: 0, g: 1, b: 0, a: 1}
+  PINK: {r: 1, g: 0.495283, b: 0.8719454, a: 1}
+  PURPLE: {r: 0.7206894, g: 0.25, b: 1, a: 1}
+  YELLOW: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  ORANGE: {r: 1, g: 0.4725827, b: 0, a: 1}
+  BLUE: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &6783006414084857506
 MonoBehaviour:
   m_ObjectHideFlags: 0
