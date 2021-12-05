@@ -15,17 +15,16 @@ public class FlyingScoreDisplay : MonoBehaviour
     private float timeElapsed;
     public float duration = 0.5f;
 
+    public int score;
+
     private void Start()
     {
         startPosition = transform.position;
-
-        //josh.position.x + (mark.position.x - josh.position.x) / 2;
 
         middlePoint = endPosition.transform.position - startPosition;
         middlePoint = new Vector3(middlePoint.x * UnityEngine.Random.Range(0.8f, 1.2f), middlePoint.y, 0);
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (timeElapsed < duration) {

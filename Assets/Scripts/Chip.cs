@@ -12,6 +12,9 @@ public class Chip : MonoBehaviour
 
     public Vector3 position;
 
+    [NonSerialized]
+    public Symbol symbol;
+
     [Header("Base Colors")]
     public Color RED = Color.red;
     public Color GREEN = Color.green;
@@ -25,6 +28,15 @@ public class Chip : MonoBehaviour
         this.Board_X = x;
         this.Board_Y = y;
         this.position = position;
+    }
+
+    public int OnMatch(List<Chip> currentMatch, List<Chip> currentChain, int multiCounter, int comboCounter) {
+        int amount = 1;
+
+        if(symbol != null)
+            amount += symbol.OnMatch(currentMatch, currentChain, multiCounter, comboCounter);
+
+        return amount;
     }
 
     public void SetChipVariant(Variant newVariant)

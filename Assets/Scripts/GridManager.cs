@@ -38,12 +38,11 @@ public class GridManager : MonoBehaviour
 
     public float chipFallSpeed = 1f;
 
-    public PlayerData playerData;
+    private int comboCounter = 1;
+    private int multiCounter = 1;
 
     void Start()
     {
-        playerData = new PlayerData();
-
         gridLayoutGroup = GetComponent<GridLayoutGroup>();
 
         gridLayoutGroup.constraintCount = width;
@@ -51,6 +50,8 @@ public class GridManager : MonoBehaviour
 
         board = new Chip[width, height];
         gridElementPositionCache = new Vector3[width, height];
+
+        currentChain = new List<Chip>();
 
         for (int x = 0; x < width; x++)
         {
@@ -201,10 +202,13 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    private List<Chip> currentChain;
+
     void CheckForMatches() {
         List<Chip> alreadyChecked = new List<Chip>();
+        List<Chip> matchedThisTurn = new List<Chip>();
 
-        bool matched = false;
+        int matched = 0;
 
         for (int x = 0; x < width; x++)
         {
@@ -217,34 +221,51 @@ public class GridManager : MonoBehaviour
 
                 alreadyChecked.AddRange(currentCheck);
 
-                if (currentCheck.Count >= playerData.AMOUNT_TO_MATCH) {
-                    matched = true;
+                if (currentCheck.Count >= PlayerData.GET_AMOUNT_TO_MATCH()) {
+                    matched++;
 
-                    foreach (Chip chip in currentCheck)
-                    {
-                        board[chip.Board_X, chip.Board_Y] = null;
-
-                        CreateFlyingScore(chip);
-                    }
+                    matchedThisTurn.AddRange(currentCheck);
                 }
 
                 currentCheck.Clear();
             }
         }
 
-        if (matched)
+        if (matched > 0)
         {
+            if (matched > 1) {
+                multiCounter = matched;
+            }
+
+            foreach (Chip chip in matchedThisTurn)
+            {
+                board[chip.Board_X, chip.Board_Y] = null;
+
+                int score = chip.OnMatch(matchedThisTurn, currentChain, multiCounter, comboCounter);
+
+                CreateFlyingScore(chip, score);
+            }
+
+            comboCounter++;
+
             UpdateBoard();
         }
         else {
+            comboCounter = 1;
+            multiCounter = 1;
+            currentChain.Clear();
+
             blockInteractions = false;
         }
     }
 
-    void CreateFlyingScore(Chip chip) {
+    void CreateFlyingScore(Chip chip, int score) {
         GameObject flyingDisplay = Instantiate(flyingScorePrefab, chip.position, Quaternion.identity, transform.parent);
 
-        flyingDisplay.GetComponent<FlyingScoreDisplay>().endPosition = scoreContainer;
+        FlyingScoreDisplay scoreDisplay = flyingDisplay.GetComponent<FlyingScoreDisplay>();
+
+       scoreDisplay.endPosition = scoreContainer;
+       scoreDisplay.score = score;
 
         chip.transform.SetParent(flyingDisplay.transform);
         chip.transform.GetComponent<SpriteRenderer>().sortingOrder = 9;
@@ -345,7 +366,7 @@ public class GridManager : MonoBehaviour
 
                 float distance = Vector2.Distance(check, pos);
 
-                if (distance < 0.4f)
+                if (distance < 0.5f)
                 {
                     grid_x = x;
                     grid_y = y;
@@ -370,4 +391,3 @@ class ValidPosition {
         this.position = new Vector3(position.x, position.y, 0);
     }
 }
-
