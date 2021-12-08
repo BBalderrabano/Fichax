@@ -36,6 +36,10 @@ public class Chip : MonoBehaviour
         if(symbol != null)
             amount += symbol.OnMatch(currentMatch, currentChain, multiCounter, comboCounter);
 
+        amount *= multiCounter;
+
+        amount *= comboCounter;
+
         return amount;
     }
 

@@ -3,7 +3,7 @@ using System.Collections;
 
 public static class PlayerData
 {
-    private static int AMOUNT_TO_MATCH = 3;
+    private static int AMOUNT_TO_MATCH = 5;
     public static int GET_AMOUNT_TO_MATCH() { return AMOUNT_TO_MATCH; }
 
     public static RARITY GetRarity(RARITY rarity) { return rarity; }

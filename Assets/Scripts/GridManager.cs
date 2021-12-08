@@ -264,8 +264,9 @@ public class GridManager : MonoBehaviour
 
         FlyingScoreDisplay scoreDisplay = flyingDisplay.GetComponent<FlyingScoreDisplay>();
 
-       scoreDisplay.endPosition = scoreContainer;
-       scoreDisplay.score = score;
+        scoreDisplay.manager = this;
+        scoreDisplay.score = score;
+        scoreDisplay.endPosition = scoreContainer;
 
         chip.transform.SetParent(flyingDisplay.transform);
         chip.transform.GetComponent<SpriteRenderer>().sortingOrder = 9;
@@ -376,6 +377,10 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void AddScore(int amount) {
+        Debug.Log(amount);
     }
 }
 

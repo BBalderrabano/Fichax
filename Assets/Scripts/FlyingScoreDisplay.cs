@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class FlyingScoreDisplay : MonoBehaviour
 {
+    public GridManager manager;
+
     public GameObject endPosition;
 
     [System.NonSerialized]
@@ -16,6 +18,8 @@ public class FlyingScoreDisplay : MonoBehaviour
     public float duration = 0.5f;
 
     public int score;
+
+    private bool isDone = false;
 
     private void Start()
     {
@@ -30,6 +34,13 @@ public class FlyingScoreDisplay : MonoBehaviour
         if (timeElapsed < duration) {
             transform.position = QuadraticCurve(startPosition, middlePoint, endPosition.transform.position, timeElapsed / duration);
             timeElapsed += Time.deltaTime;
+        }
+        else
+        {
+            if (manager != null && score > 0 && !isDone) {
+                manager.AddScore(score);
+                isDone = true;
+            }
         }
     }
 
