@@ -221,7 +221,7 @@ public class GridManager : MonoBehaviour
 
                 alreadyChecked.AddRange(currentCheck);
 
-                if (currentCheck.Count >= PlayerData.GET_AMOUNT_TO_MATCH()) {
+                if (currentCheck.Count >= PlayerData.singleton.GET_AMOUNT_TO_MATCH()) {
                     matched++;
 
                     matchedThisTurn.AddRange(currentCheck);

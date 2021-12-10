@@ -1,12 +1,36 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public static class PlayerData
+public class PlayerData : MonoBehaviour
 {
-    private static int AMOUNT_TO_MATCH = 5;
-    public static int GET_AMOUNT_TO_MATCH() { return AMOUNT_TO_MATCH; }
+    [Header("Constant Variables")]
+    public static PlayerData singleton;
 
-    public static RARITY GetRarity(RARITY rarity) { return rarity; }
+    [SerializeField]
+    private int AMOUNT_TO_MATCH = 5;
+    public int GET_AMOUNT_TO_MATCH() { return AMOUNT_TO_MATCH; }
+
+    public RARITY GetRarity(RARITY rarity) { return rarity; }
+
+    [Header("Match Variables")]
+
+    [SerializeField]
+    private int score = 0;
+
+    public void AddScore(int amount) { score += amount; }
+
+    public int GetScore() { return score; }
+
+    [SerializeField]
+    private int xp = 0;
+
+    [SerializeField]
+    private int max_xp = 10;
+
+    private void Start()
+    {
+        singleton = this;
+    }
 }
 
 public enum RARITY { 
