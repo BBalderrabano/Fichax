@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class ScoreManager : MonoBehaviour
 {
+    private PlayerData pd;
+    private LevelSystem animLevelSystem;
+
     public GameObject sliderComponent;
     public GameObject levelComponent;
     public GameObject scoreComponent;
@@ -16,13 +19,17 @@ public class ScoreManager : MonoBehaviour
     private TextMeshProUGUI scoreDisplay;
     private TextMeshProUGUI xpDisplay;
 
-    private int currentScore;
+    private float startScore;
 
     private bool animating = false;
+    
+    private Vector3 levelOriginalScale;
 
-    // Start is called before the first frame update
     void Start()
     {
+        pd = PlayerData.singleton;
+        animLevelSystem = new LevelSystem(pd.start_max_xp, pd.max_xp_increment);
+
         slider = sliderComponent.GetComponent<Slider>();
         levelDisplay = levelComponent.GetComponentInChildren<TextMeshProUGUI>();
         scoreDisplay = scoreComponent.GetComponent<TextMeshProUGUI>();
@@ -32,19 +39,87 @@ public class ScoreManager : MonoBehaviour
         levelDisplay.text = "1";
         scoreDisplay.text = "Score: 0";
         xpDisplay.text = "0/10";
+
+        levelOriginalScale = levelComponent.transform.localScale;
     }
 
-    void Update()
-    {
-        if (animating)
-        {
+    int levelAnimationTweenId = -1;
+    int scoreAnimationTweenId = -1;
+    int finalAnimationTweenId = -1;
 
-        }
+    void IncreaseScoreAndXp(float amount) {
+        animLevelSystem.AddScore(amount);
+
+        xpDisplay.text = Mathf.FloorToInt(animLevelSystem.GetXp()) + "/" + Mathf.FloorToInt(animLevelSystem.GetXpToLevel());
+
+        slider.value = (animLevelSystem.GetXp() / animLevelSystem.GetXpToLevel()) * 100f;
     }
 
     public void AddScore(int amount) {
-        PlayerData.singleton.AddScore(amount);
+        pd.playerLevelData.AddScore(amount);
 
-        animating = true;
+        if (!animating) {
+            startScore = Mathf.FloorToInt(animLevelSystem.GetScore());
+            animating = true;
+        }
+
+        if (finalAnimationTweenId > 0)
+            LeanTween.cancel(finalAnimationTweenId);
+
+        scoreDisplay.text = "+" + (pd.playerLevelData.GetScore() - startScore);
+
+        PulsateLevelStar();
+
+        AnimateScore();
+    }
+
+    void PulsateLevelStar() {
+
+        if (levelAnimationTweenId > 0)
+            LeanTween.cancel(levelAnimationTweenId);
+
+        levelAnimationTweenId = LeanTween.scale(levelComponent, levelOriginalScale * 1.3f, 0.8f)
+                                .setFrom(levelOriginalScale).setEasePunch()
+                                .setOnComplete(() => {
+                                    levelAnimationTweenId = -1;
+                                }).id;
+    }
+
+    public LeanTweenType easing;
+
+    void AnimateScore() {
+        if (scoreAnimationTweenId > 0)
+            LeanTween.cancel(scoreAnimationTweenId);
+            
+        float currentScore = animLevelSystem.GetScore();
+
+        float lastTick = currentScore;
+
+        scoreAnimationTweenId = LeanTween.value(currentScore, pd.playerLevelData.GetScore(), 1f)
+                                    .setOnUpdate((float n) => {
+                                        IncreaseScoreAndXp(Mathf.Abs(n - lastTick));
+                                        lastTick = n;
+                                    })
+                                    .setOnComplete(()=> {
+                                        scoreAnimationTweenId = -1;
+                                        FinishAnimation();
+                                    }).setEase(easing).id;
+    }
+
+    void FinishAnimation() {
+        if (finalAnimationTweenId > 0)
+            LeanTween.cancel(finalAnimationTweenId);
+
+        finalAnimationTweenId = LeanTween.value(startScore, pd.playerLevelData.GetScore(), 1f)
+                    .setOnUpdate((float n) => {
+                        animating = false;
+
+                        scoreDisplay.text = "Score: " + Mathf.FloorToInt(n);
+                    })
+                    .setOnComplete(() => {
+                        finalAnimationTweenId = -1;
+
+                        animLevelSystem.SetScore(pd.playerLevelData.GetScore());
+                    }).setDelay(2).id;
     }
 }

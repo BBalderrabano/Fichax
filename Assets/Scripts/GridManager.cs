@@ -32,6 +32,8 @@ public class GridManager : MonoBehaviour
 
     public Chip[,] board;
 
+    public float dropDistance = 0.45f;
+
     [Space(10)]
     [Header("Sprite and Animations")]
     public float boardOpacity = 0.5f;
@@ -101,6 +103,8 @@ public class GridManager : MonoBehaviour
             Transform child = chipPicker.GetChild(i);
 
             GetGridPosition(child.position, out int x, out int y, out Vector3 gridPosition);
+
+            Debug.Log("Dropped at " + x + "/" + y);
 
             if (x >= 0 && y >= 0 && board[x,y] == null)
             {
@@ -264,7 +268,6 @@ public class GridManager : MonoBehaviour
 
         FlyingScoreDisplay scoreDisplay = flyingDisplay.GetComponent<FlyingScoreDisplay>();
 
-        scoreDisplay.manager = this;
         scoreDisplay.score = score;
         scoreDisplay.endPosition = scoreContainer;
 
@@ -367,7 +370,7 @@ public class GridManager : MonoBehaviour
 
                 float distance = Vector2.Distance(check, pos);
 
-                if (distance < 0.5f)
+                if (distance < dropDistance)
                 {
                     grid_x = x;
                     grid_y = y;
@@ -377,10 +380,6 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-    }
-
-    public void AddScore(int amount) {
-        Debug.Log(amount);
     }
 }
 

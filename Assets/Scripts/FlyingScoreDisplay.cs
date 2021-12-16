@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class FlyingScoreDisplay : MonoBehaviour
 {
-    public GridManager manager;
+    public ScoreManager manager;
 
     public GameObject endPosition;
 
@@ -23,10 +24,14 @@ public class FlyingScoreDisplay : MonoBehaviour
 
     private void Start()
     {
+        manager = endPosition.GetComponent<ScoreManager>();
+
         startPosition = transform.position;
 
         middlePoint = endPosition.transform.position - startPosition;
         middlePoint = new Vector3(middlePoint.x * UnityEngine.Random.Range(0.8f, 1.2f), middlePoint.y, 0);
+
+        duration *= Random.Range(1f, 2f);
     }
 
     void Update()

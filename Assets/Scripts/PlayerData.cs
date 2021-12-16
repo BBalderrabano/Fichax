@@ -12,24 +12,17 @@ public class PlayerData : MonoBehaviour
 
     public RARITY GetRarity(RARITY rarity) { return rarity; }
 
+    public LevelSystem playerLevelData;
+
     [Header("Match Variables")]
+    public int start_max_xp = 10;
+    
+    public float max_xp_increment = 1.5f;
 
-    [SerializeField]
-    private int score = 0;
-
-    public void AddScore(int amount) { score += amount; }
-
-    public int GetScore() { return score; }
-
-    [SerializeField]
-    private int xp = 0;
-
-    [SerializeField]
-    private int max_xp = 10;
-
-    private void Start()
+    private void Awake()
     {
         singleton = this;
+        playerLevelData = new LevelSystem(start_max_xp, max_xp_increment);
     }
 }
 
