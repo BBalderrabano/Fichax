@@ -98,7 +98,12 @@ public class GridManager : MonoBehaviour
 
         List<ValidPosition> validPositions = new List<ValidPosition>();
 
-        for (int i = 0; i < chipPicker.childCount; i++)
+        int amountOfChips = chipPicker.childCount;
+
+        int[] previous_x = Enumerable.Repeat(-1, amountOfChips).ToArray();
+        int[] previous_y = Enumerable.Repeat(-1, amountOfChips).ToArray();
+
+        for (int i = 0; i < amountOfChips; i++)
         {
             Transform child = chipPicker.GetChild(i);
 
@@ -106,7 +111,7 @@ public class GridManager : MonoBehaviour
 
             Debug.Log("Dropped at " + x + "/" + y);
 
-            if (x >= 0 && y >= 0 && board[x,y] == null)
+            if (x >= 0 && y >= 0 && board[x,y] == null && !Overlaps(x, y, previous_x, previous_y))
             {
                 isValid = true;
 
@@ -116,11 +121,14 @@ public class GridManager : MonoBehaviour
             {
                 return false;
             }
+
+            previous_x[i] = x;
+            previous_y[i] = y;
         }
 
         if (isValid) {
 
-            for (int i = chipPicker.childCount - 1; i >= 0 ; i--)
+            for (int i = amountOfChips - 1; i >= 0 ; i--)
             {
                 Transform child = chipPicker.GetChild(i);
                 ValidPosition validPos = validPositions[i];
@@ -142,6 +150,23 @@ public class GridManager : MonoBehaviour
         }
 
         return isValid;
+    }
+
+    bool Overlaps(int x, int y, int[] previous_x, int[] previous_y) {
+
+        for (int _x = 0; _x < previous_x.Length; _x++)
+        {
+            for (int _y = 0; _y < previous_y.Length; _y++)
+            {
+                if (previous_x[_x] < 0 && previous_y[_y] < 0)
+                    continue;
+
+                if (x == previous_x[_x] && y == previous_y[_y])
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private int fallingAmount = 0;
