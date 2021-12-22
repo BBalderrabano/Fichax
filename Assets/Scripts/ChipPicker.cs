@@ -35,11 +35,17 @@ public class ChipPicker : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (BlockingInteractions())
+            return;
+
         dragging = true;
     }
 
     void OnMouseUp()
     {
+        if (BlockingInteractions())
+            return;
+
         if (!IsDragging())
         {
             rotateTimes++;

@@ -13,11 +13,13 @@ public class ScoreManager : MonoBehaviour
     public GameObject levelComponent;
     public GameObject scoreComponent;
     public GameObject xpComponent;
+    public GameObject levelPanelComponent;
 
     private Slider slider;
     private TextMeshProUGUI levelDisplay;
     private TextMeshProUGUI scoreDisplay;
     private TextMeshProUGUI xpDisplay;
+    private CanvasGroup levelPanelCanvasGroup;
 
     private float startScore;
 
@@ -34,6 +36,7 @@ public class ScoreManager : MonoBehaviour
         levelDisplay = levelComponent.GetComponentInChildren<TextMeshProUGUI>();
         scoreDisplay = scoreComponent.GetComponent<TextMeshProUGUI>();
         xpDisplay = xpComponent.GetComponent<TextMeshProUGUI>();
+        levelPanelCanvasGroup = levelPanelComponent.GetComponent<CanvasGroup>();
 
         slider.value = 0;
         levelDisplay.text = "1";
@@ -51,6 +54,7 @@ public class ScoreManager : MonoBehaviour
         animLevelSystem.AddScore(amount);
 
         xpDisplay.text = Mathf.FloorToInt(animLevelSystem.GetXp()) + "/" + Mathf.FloorToInt(animLevelSystem.GetXpToLevel());
+        levelDisplay.text = animLevelSystem.GetLevel() + "";
 
         slider.value = (animLevelSystem.GetXp() / animLevelSystem.GetXpToLevel()) * 100f;
     }
@@ -85,8 +89,6 @@ public class ScoreManager : MonoBehaviour
                                 }).id;
     }
 
-    public LeanTweenType easing;
-
     void AnimateScore() {
         if (scoreAnimationTweenId > 0)
             LeanTween.cancel(scoreAnimationTweenId);
@@ -103,7 +105,7 @@ public class ScoreManager : MonoBehaviour
                                     .setOnComplete(()=> {
                                         scoreAnimationTweenId = -1;
                                         FinishAnimation();
-                                    }).setEase(easing).id;
+                                    }).setEaseOutCubic().id;
     }
 
     void FinishAnimation() {

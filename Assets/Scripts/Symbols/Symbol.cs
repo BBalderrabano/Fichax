@@ -16,13 +16,17 @@ public abstract class Symbol : ScriptableObject
     [System.NonSerialized]
     public Chip chip;
 
-    public abstract int OnMatch(List<Chip> currentMatch, List<Chip> currentChain, int multiCounter, int comboCounter);
+    public int score;
+
+    public virtual int OnMatch(List<Chip> currentMatch, List<Chip> currentChain, int multiCounter, int comboCounter) {
+        return score;
+    }
 
     public virtual void OnChipGeneration(Chip chip) {
         this.chip = chip;
     }
 
-    public abstract void OnEnterBoard(int x, int y);
+    public virtual void OnEnterBoard(int x, int y) { }
 
     public virtual List<Symbol> OnExitBoard(List<Symbol> allSymbols) {
         chip = null;

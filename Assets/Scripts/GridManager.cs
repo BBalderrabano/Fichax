@@ -109,8 +109,6 @@ public class GridManager : MonoBehaviour
 
             GetGridPosition(child.position, out int x, out int y, out Vector3 gridPosition);
 
-            Debug.Log("Dropped at " + x + "/" + y);
-
             if (x >= 0 && y >= 0 && board[x,y] == null && !Overlaps(x, y, previous_x, previous_y))
             {
                 isValid = true;
